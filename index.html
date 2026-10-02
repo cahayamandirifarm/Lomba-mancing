@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fish It - Simulator Mancing & Turnamen</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #1a2a3a;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 480px;
+            background-color: #243b55;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Bar Info */
+        .top-bar {
+            background-color: #141e30;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: bold;
+            border-bottom: 2px solid #00d2ff;
+        }
+
+        .stat-badge {
+            background: rgba(255,255,255,0.1);
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        /* Area Mancing Main Visual */
+        .lake-area {
+            height: 220px;
+            background: linear-gradient(180deg, #87CEEB 0%, #0077be 50%, #004080 100%);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .bobber {
+            width: 20px;
+            height: 20px;
+            background-color: red;
+            border-radius: 50%;
+            border: 3px solid white;
+            display: none;
+            position: absolute;
+            bottom: 60px;
+            animation: float 1s infinite alternate;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-8px); }
+        }
+
+        .status-text {
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+            margin-bottom: 10px;
+        }
+
+        /* Tension / Reel Minigame Bar */
+        .bar-container {
+            width: 80%;
+            height: 16px;
+            background-color: #444;
+            border-radius: 8px;
+            overflow: hidden;
+            display: none;
+            border: 2px solid #fff;
+            margin-top: 10px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: #00ff88;
+            transition: width 0.1s linear;
+        }
+
+        /* Controls Section */
+        .controls-area {
+            padding: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            background-color: #1a2a3a;
+        }
+
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .btn-action { background-color: #00d2ff; color: #000; flex: 1; font-size: 16px; }
+        .btn-shop { background-color: #ff9900; color: #000; }
+        .btn-tourney { background-color: #ff4757; color: #fff; }
+        .btn-action:disabled { background-color: #555; color: #888; cursor: not-allowed; }
+
+        /* Panels (Toko & Inventaris & Lomba) */
+        .panel {
+            padding: 15px;
+            background-color: #1e3246;
+            border-top: 1px solid #334e68;
+            display: none;
+        }
+
+        .panel-title {
+            font-size: 16px;
+            color: #00d2ff;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #334e68;
+            padding-bottom: 5px;
+        }
+
+        .shop-item, .inventory-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #243b55;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        /* Tab Navigation */
+        .tab-menu {
+            display: flex;
+            background-color: #101726;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            background: none;
+            color: #aaa;
+            border-radius: 0;
+            font-size: 13px;
+        }
+
+        .tab-btn.active {
+            color: #00d2ff;
+            border-bottom: 3px solid #00d2ff;
+            background-color: #1e3246;
+        }
+
+        .tourney-box {
+            background: #2d1f3d;
+            border: 1px solid #9b51e0;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <!-- Stat Header -->
+    <div class="top-bar">
+        <div class="stat-badge">💰 <span id="coin-display">100</span> Koin</div>
+        <div class="stat-badge">🎒 Tas: <span id="bag-weight">0</span>/<span id="bag-capacity">20</span> kg</div>
+        <div class="stat-badge" style="color: #00ff88;">🎣 <span id="rod-display">Joran Kayu</span></div>
+    </div>
+
+    <!-- Area Mancing Visual -->
+    <div class="lake-area">
+        <div class="status-text" id="game-status">Klik "Lempar Kail" untuk Mulai</div>
+        <div class="bobber" id="bobber"></div>
+        <div class="bar-container" id="bar-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+    </div>
+
+    <!-- Tombol Utama Permainan -->
+    <div class="controls-area">
+        <button class="btn-action" id="action-btn" onclick="handleAction()">Lempar Kail</button>
+    </div>
+
+    <!-- Tab Menu Navigasi -->
+    <div class="tab-menu">
+        <button class="tab-btn active" onclick="switchTab('bag')">🎒 Tas Ikan</button>
+        <button class="tab-btn" onclick="switchTab('shop')">🛒 Toko Alat</button>
+        <button class="tab-btn" onclick="switchTab('tourney')">🏆 Lomba</button>
+    </div>
+
+    <!-- Panel 1: Tas Ikan -->
+    <div class="panel" id="panel-bag" style="display: block;">
+        <div class="panel-title">Tangkapan Dalam Tas</div>
+        <div id="fish-list">
+            <div style="color: #888; font-size: 13px;">Tas masih kosong...</div>
+        </div>
+        <button class="btn-shop" style="width: 100%; margin-top: 10px;" onclick="sellAllFish()">Jual Semua Ikan 💰</button>
+    </div>
+
+    <!-- Panel 2: Toko Alat Pancing -->
+    <div class="panel" id="panel-shop">
+        <div class="panel-title">Upgrade Joran & Tas</div>
+        <div class="shop-item">
+            <div>
+                <strong>Joran Besi (+Kekuatan)</strong><br>
+                <small style="color: #aaa;">Harga: 200 Koin</small>
+            </div>
+            <button class="btn-shop" onclick="buyRod('Joran Besi', 200, 2)">Beli</button>
+        </div>
+        <div class="shop-item">
+            <div>
+                <strong>Upgrade Tas (Cap: 50kg)</strong><br>
+                <small style="color: #aaa;">Harga: 150 Koin</small>
+            </div>
+            <button class="btn-shop" onclick="buyBag(50, 150)">Beli</button>
+        </div>
+    </div>
+
+    <!-- Panel 3: Lomba / Turnamen -->
+    <div class="panel" id="panel-tourney">
+        <div class="panel-title">Turnamen Mancing Berhadiah</div>
+        <div class="tourney-box">
+            <h4>🏆 Lomba Mingguan Pemancing Mania</h4>
+            <p style="font-size: 12px; margin: 8px 0; color: #ddd;">
+                Tiket Masuk: <strong>50 Koin</strong><br>
+                Juara 1: Saldo E-Wallet Rp100.000<br>
+                Kriteria: Total berat ikan terbanyak (3 Menit)
+            </p>
+            <button class="btn-tourney" onclick="joinTournament()" id="btn-join-tourney">Bayar Tiket & Ikut Lomba</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // System State
+    let coins = 100;
+    let currentBagWeight = 0;
+    let maxBagCapacity = 20;
+    let currentRod = "Joran Kayu";
+    let rodPower = 1; // Kecepatan narik
+    let bagItems = [];
+
+    // State Mancing: 'IDLE', 'WAITING', 'HOOKED', 'REELING'
+    let gameState = 'IDLE';
+    let pullProgress = 0;
+    let targetFish = null;
+    let waitTimer = null;
+    let isTournamentActive = false;
+
+    // Database Ikan (Nama, Bobot Min-Max, Harga per kg)
+    const fishDatabase = [
+        { name: "Ikan Lele", minWeight: 1, maxWeight: 3, pricePerKg: 10 },
+        { name: "Ikan Nila", minWeight: 2, maxWeight: 5, pricePerKg: 15 },
+        { name: "Ikan Gurame", minWeight: 4, maxWeight: 8, pricePerKg: 25 },
+        { name: "Ikan Patin Jumbo", minWeight: 8, maxWeight: 15, pricePerKg: 40 },
+        { name: "Ikan Hiubatu (Rare)", minWeight: 15, maxWeight: 30, pricePerKg: 80 }
+    ];
+
+    // Functions - Core Fishing Mechanics
+    function handleAction() {
+        const btn = document.getElementById('action-btn');
+
+        if (gameState === 'IDLE') {
+            if (currentBagWeight >= maxBagCapacity) {
+                alert("Tas kamu penuh! Jual ikanmu terlebih dahulu.");
+                return;
+            }
+            startFishing();
+        } else if (gameState === 'HOOKED' || gameState === 'REELING') {
+            reelIn();
+        }
+    }
+
+    function startFishing() {
+        gameState = 'WAITING';
+        document.getElementById('game-status').innerText = "Menunggu Ikan Memakan Umpan...";
+        document.getElementById('action-btn').innerText = "Tunggu...";
+        document.getElementById('action-btn').disabled = true;
+        document.getElementById('bobber').style.display = 'block';
+
+        // Acak Waktu Tunggu Ikan Umpan Dimakan (2-5 Detik)
+        const waitTime = Math.floor(Math.random() * 3000) + 2000;
+        waitTimer = setTimeout(fishHooked, waitTime);
+    }
+
+    function fishHooked() {
+        gameState = 'HOOKED';
+        // Tentukan ikan berdasarkan acakan
+        const randomIndex = Math.floor(Math.random() * fishDatabase.length);
+        const template = fishDatabase[randomIndex];
+        const weight = (Math.random() * (template.maxWeight - template.minWeight) + template.minWeight).toFixed(1);
+        
+        targetFish = {
+            name: template.name,
+            weight: parseFloat(weight),
+            value: Math.round(weight * template.pricePerKg)
+        };
+
+        document.getElementById('game-status').innerText = `IKAN DISAMBAR! (Target: ${targetFish.name})`;
+        document.getElementById('action-btn').innerText = "PULL / TARIK! 🎣";
+        document.getElementById('action-btn').disabled = false;
+        document.getElementById('bar-container').style.display = 'block';
+        pullProgress = 10;
+        updateBar();
+    }
+
+    function reelIn() {
+        gameState = 'REELING';
+        // Tambah progres penarikan berdasarkan kekuatan Joran
+        pullProgress += 12 * rodPower;
+        updateBar();
+
+        if (pullProgress >= 100) {
+            catchFishSuccess();
+        }
+    }
+
+    function updateBar() {
+        document.getElementById('progress-bar').style.width = pullProgress + "%";
+    }
+
+    function catchFishSuccess() {
+        gameState = 'IDLE';
+        document.getElementById('bobber').style.display = 'none';
+        document.getElementById('bar-container').style.display = 'none';
+
+        // Cek Sisa Kapasitas Tas
+        if (currentBagWeight + targetFish.weight > maxBagCapacity) {
+            document.getElementById('game-status').innerText = `Ikan terlepas! Tas kamu tidak muat.`;
+        } else {
+            bagItems.push(targetFish);
+            currentBagWeight += targetFish.weight;
+            document.getElementById('game-status').innerText = `Berhasil Dapat: ${targetFish.name} (${targetFish.weight} kg)!`;
+            updateUI();
+        }
+
+        document.getElementById('action-btn').innerText = "Lempar Kail";
+    }
+
+    // UI Updates & Shop Mechanics
+    function updateUI() {
+        document.getElementById('coin-display').innerText = coins;
+        document.getElementById('bag-weight').innerText = currentBagWeight.toFixed(1);
+        document.getElementById('bag-capacity').innerText = maxBagCapacity;
+        document.getElementById('rod-display').innerText = currentRod;
+
+        // Render List Tas Ikan
+        const fishListEl = document.getElementById('fish-list');
+        if (bagItems.length === 0) {
+            fishListEl.innerHTML = `<div style="color: #888; font-size: 13px;">Tas masih kosong...</div>`;
+        } else {
+            fishListEl.innerHTML = "";
+            bagItems.forEach((item) => {
+                fishListEl.innerHTML += `
+                    <div class="inventory-item">
+                        <span>🐟 ${item.name} (${item.weight} kg)</span>
+                        <span style="color: #00ff88;">💰 ${item.value}</span>
+                    </div>
+                `;
+            });
+        }
+    }
+
+    function sellAllFish() {
+        if (bagItems.length === 0) return;
+        
+        let totalEarnings = 0;
+        bagItems.forEach(item => totalEarnings += item.value);
+        
+        coins += totalEarnings;
+        bagItems = [];
+        currentBagWeight = 0;
+        
+        alert(`Semua ikan berhasil dijual seharga ${totalEarnings} Koin!`);
+        updateUI();
+    }
+
+    function buyRod(name, price, power) {
+        if (coins >= price) {
+            coins -= price;
+            currentRod = name;
+            rodPower = power;
+            alert(`Selamat! Kamu membeli ${name}. Tarikan kail sekarang lebih kuat!`);
+            updateUI();
+        } else {
+            alert("Koin kamu tidak cukup!");
+        }
+    }
+
+    function buyBag(capacity, price) {
+        if (coins >= price) {
+            coins -= price;
+            maxBagCapacity = capacity;
+            alert(`Tas berhasil diperluas menjadi kapasitas ${capacity} kg!`);
+            updateUI();
+        } else {
+            alert("Koin kamu tidak cukup!");
+        }
+    }
+
+    function joinTournament() {
+        if (coins >= 50) {
+            coins -= 50;
+            updateUI();
+            alert("Berhasil mendaftar Turnamen! Nilai berat ikanmu sekarang masuk ke dalam sistem penilaian Leaderboard Lomba.");
+            document.getElementById('btn-join-tourney').innerText = "Terdaftar Dalam Lomba ✓";
+            document.getElementById('btn-join-tourney').disabled = true;
+        } else {
+            alert("Koin tidak cukup untuk membeli Tiket Lomba (50 Koin).");
+        }
+    }
+
+    function switchTab(tabName) {
+        document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+        document.getElementById('panel-' + tabName).style.display = 'block';
+        event.currentTarget.classList.add('active');
+    }
+</script>
+</body>
+</html>
